@@ -8,17 +8,20 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import tn.esprit.autoloc.autolocapi.domain.Agence;
 import tn.esprit.autoloc.autolocapi.domain.CategorieVehicule;
 import tn.esprit.autoloc.autolocapi.domain.StatutVehicule;
 import tn.esprit.autoloc.autolocapi.domain.Vehicule;
-import tn.esprit.autoloc.autolocapi.repository.IAgenceRepository; // use your real repository package
+import tn.esprit.autoloc.autolocapi.repository.IAgenceRepository;
+import tn.esprit.autoloc.autolocapi.service.IAgenceService;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -30,6 +33,9 @@ public class AgenceTests {
 
     @Autowired
     private IAgenceRepository fullAgenceRepository;
+
+    @Autowired
+    private IAgenceService agenceService;
 
     private void addAgence(CrudRepository<Agence, Long> repository) {
         int suffix = (int) System.currentTimeMillis();
@@ -130,7 +136,22 @@ public class AgenceTests {
         }
         fail(sb.toString());
     }
+
+    @Test
+    public void createAgence() {
+        Agence agence = Agence.builder()
+                .nom("Agence service")
+                .adresse("2 Rue Test")
+                .telephone("71000000")
+                .ville("Sfax")
+                .build();
+
+        Agence saved = agenceService.create(agence);
+
+        assertNotNull(saved.getId());
+    }
 }
 
+@Repository
 interface AgenceRepositoryMock extends CrudRepository<Agence, Long> {
 }
