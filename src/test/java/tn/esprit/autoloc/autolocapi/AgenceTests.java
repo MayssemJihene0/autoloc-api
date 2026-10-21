@@ -4,30 +4,38 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import tn.esprit.autoloc.autolocapi.domain.Agence;
 import tn.esprit.autoloc.autolocapi.domain.CategorieVehicule;
 import tn.esprit.autoloc.autolocapi.domain.StatutVehicule;
 import tn.esprit.autoloc.autolocapi.domain.Vehicule;
+import tn.esprit.autoloc.autolocapi.repository.IAgenceRepository; // use your real repository package
 
 import java.math.BigDecimal;
-import java.net.InterfaceAddress;
-import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest
-
 public class AgenceTests {
+
     @Autowired
-    private AgenceRepositoryMock agenceRepository;
-    @Test
-    public void addAgence() {
+    private AgenceRepositoryMock basicAgenceRepository;
+
+    @Autowired
+    private IAgenceRepository fullAgenceRepository;
+
+    private void addAgence(CrudRepository<Agence, Long> repository) {
+        int suffix = (int) System.currentTimeMillis();
+
         Vehicule v1 = Vehicule.builder()
-                .immatriculation("785414TU96")
+                .immatriculation("TN-" + suffix + "-1")
                 .marque("Isuzu")
                 .modele("DMax")
                 .statut(StatutVehicule.MAINTENANCE)
@@ -36,7 +44,7 @@ public class AgenceTests {
                 .build();
 
         Vehicule v2 = Vehicule.builder()
-                .immatriculation("785414TU95")
+                .immatriculation("TN-" + suffix + "-2")
                 .marque("Toyota")
                 .modele("Yaris")
                 .statut(StatutVehicule.DISPONIBLE)
@@ -55,13 +63,24 @@ public class AgenceTests {
         v1.setAgence(agence);
         v2.setAgence(agence);
 
-        agenceRepository.save(agence);
+        repository.save(agence);
     }
-    @Test
-    public void loadAgence() {
-        StringBuilder sb = new StringBuilder();
 
-        for (Agence a : agenceRepository.findAll()) {
+    @Test
+    public void basicAddAgence() {
+        addAgence(basicAgenceRepository);
+    }
+
+    @Test
+    public void fullAddAgence() {
+        addAgence(fullAgenceRepository);
+    }
+
+    private void loadAgence(CrudRepository<Agence, Long> repository, String type) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Repository type : ").append(type).append("\n");
+
+        for (Agence a : repository.findAll()) {
             sb.append("\n")
                     .append(a.getId()).append(" | ").append(a.getNom()).append("\n")
                     .append("Vehicules Count : ").append(a.getVehicules().size()).append("\n");
@@ -75,8 +94,43 @@ public class AgenceTests {
         fail(sb.toString());
     }
 
+    @Test
+    public void basicLoadAgence() {
+        loadAgence(basicAgenceRepository, "basic (CrudRepository)");
     }
-interface AgenceRepositoryMock extends CrudRepository<Agence, Long> {
 
+    @Test
+    public void fullLoadAgence() {
+        loadAgence(fullAgenceRepository, "full (JpaRepository)");
+    }
+
+    @Test
+    public void loadSortedAgences() {
+        List<Agence> agences = fullAgenceRepository.findAll(Sort.by(Sort.Direction.DESC, "id"));
+
+        StringBuilder sb = new StringBuilder();
+        for (Agence a : agences) {
+            sb.append(a.getId()).append(" | ").append(a.getNom())
+                    .append(" | ").append(a.getVille()).append("\n");
+        }
+        fail(sb.toString());
+    }
+
+    @Test
+    public void loadPagedAgences() {
+        Page<Agence> page = fullAgenceRepository.findAll(
+                PageRequest.of(0, 2, Sort.by(Sort.Direction.DESC, "id")));
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Total pages : ").append(page.getTotalPages()).append("\n");
+        sb.append("Current page : ").append(page.getNumber()).append("\n");
+        for (Agence a : page.getContent()) {
+            sb.append(a.getId()).append(" | ").append(a.getNom())
+                    .append(" | ").append(a.getVille()).append("\n");
+        }
+        fail(sb.toString());
+    }
 }
 
+interface AgenceRepositoryMock extends CrudRepository<Agence, Long> {
+}
