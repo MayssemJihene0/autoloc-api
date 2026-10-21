@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Table(name = "contrat")
@@ -24,4 +25,6 @@ public class Contrat {
     private BigDecimal montantTotal;
 
     private Boolean valide;
+    @OneToMany(mappedBy = "contrat", fetch = FetchType.EAGER)
+    private List<Paiement> paiements;
 }

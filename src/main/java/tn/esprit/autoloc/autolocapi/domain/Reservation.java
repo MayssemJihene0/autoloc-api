@@ -23,4 +23,13 @@ public class Reservation {
     private LocalDate dateFin;
 
     private String statut;
+
+    @ManyToOne
+    @JoinColumn(name = "vehicule_id")
+    private Vehicule vehicule;
+
+    @ManyToOne
+    private Client client;
+    @OneToOne
+    private Contrat contrat;
 }
